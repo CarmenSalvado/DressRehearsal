@@ -1,0 +1,44 @@
+# Dress Rehearsal
+
+Virtual costume casting for rental shops, built for the [YouCam API Skin AI & Apparel VTO Hackathon](https://youcam-api.devpost.com/). A shopper uploads one photograph, auditions three fixed rental garments through YouCam AI Clothes, chooses one look, and records demo fitting intent.
+
+## Stack
+
+- Next.js 16 App Router and Node.js 22
+- Node's built-in SQLite for durable session/task state
+- `sharp` for decode validation, EXIF removal and JPEG normalization
+- YouCam AI Clothes v3 REST API
+- Native `fetch`, CSS and Web APIs; no ORM, queue service or client-exposed provider credentials
+
+The current official integration uses `POST /s2s/v2.0/file/cloth-v3`, a credential-free PUT to its signed upload URL, `POST /s2s/v2.0/task/cloth-v3`, and polling at `GET /s2s/v2.0/task/cloth-v3/{task_id}`. See the [AI Clothes documentation](https://docs.perfectcorp.com/reference/ai_clothes/section/overview).
+
+## Run locally
+
+```bash
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Fill every required value in `.env.local`. The three garment URLs must be public HTTPS images that you have permission to use and that satisfy YouCam's reference-image requirements. Check readiness at `GET /api/health`.
+
+## API flow
+
+1. `POST /api/access` with `{ "code": "..." }` sets the short-lived access cookie.
+2. `POST /api/sessions` with consent, rights confirmation and `scene: "main-stage"` creates an owned session.
+3. `POST /api/sessions/:id/photo` accepts multipart field `photo`, validates 1–10 MB JPEG/PNG/WebP, strips metadata and uploads only the normalized in-memory bytes.
+4. `POST /api/sessions/:id/start` with an `Idempotency-Key` creates exactly three bounded tasks.
+5. `GET /api/sessions/:id` polls due provider tasks and returns only application states and private proxy URLs.
+6. Selection, fitting intent, one bounded retry, result proxy and session deletion complete the flow.
+
+Provider file IDs, task IDs, signed URLs, bearer tokens and upstream response bodies never appear in client responses or logs. The original upload is never written to disk or SQLite. Perfect Corp currently retains uploaded files/task IDs for 30 days and result download URLs for two hours; deleting a local session cannot override provider retention. See [file retention](https://docs.perfectcorp.com/develop/file_retention_period).
+
+## Verify
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+Deploy as one Node process with a persistent volume mounted at `/data`. SQLite and the process-local access cooldown are intentional hackathon ceilings; use a managed relational database and shared rate limiter before multi-instance production deployment.
