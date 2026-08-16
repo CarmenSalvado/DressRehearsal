@@ -16,7 +16,6 @@ export function createDatabase(filename: string) {
       state TEXT NOT NULL,
       consent_at INTEGER NOT NULL,
       selected_garment_id TEXT,
-      fitting_intent_at INTEGER,
       source_file_id TEXT,
       start_key TEXT,
       created_at INTEGER NOT NULL,
@@ -49,6 +48,17 @@ export function createDatabase(filename: string) {
       created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS campaign_signals (
+      session_id TEXT PRIMARY KEY,
+      garment_id TEXT NOT NULL,
+      willing_price_cents INTEGER CHECK (
+        willing_price_cents IS NULL OR willing_price_cents BETWEEN 5000 AND 100000
+      ),
+      backed_at INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS daily_counters (
       day TEXT PRIMARY KEY,
       sessions INTEGER NOT NULL
@@ -57,6 +67,7 @@ export function createDatabase(filename: string) {
     CREATE INDEX IF NOT EXISTS tasks_state_poll ON tasks(state, next_poll_at);
     CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
     CREATE INDEX IF NOT EXISTS usage_created ON usage_events(created_at);
+    CREATE INDEX IF NOT EXISTS signals_garment ON campaign_signals(garment_id, backed_at);
   `);
   return db;
 }

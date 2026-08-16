@@ -228,7 +228,7 @@ input:focus-visible,
 
 .hero h1 {
   margin: 0;
-  max-width: 8ch;
+  max-width: 10ch;
   font-family: "GFS Didot", Georgia, serif;
   font-size: clamp(4.75rem, 9.2vw, 10.5rem);
   font-weight: 400;
@@ -296,12 +296,13 @@ input:focus-visible,
   transform: scale(0.97);
 }
 
-.hero-action p {
-  margin: 0;
-  color: rgb(244 240 232 / 51%);
-  font-size: 0.66rem;
-  line-height: 1.7;
-  letter-spacing: 0.08em;
+.studio-action {
+  color: rgb(244 240 232 / 66%);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-decoration-color: rgb(216 179 106 / 48%);
+  text-underline-offset: 0.4rem;
   text-transform: uppercase;
 }
 
@@ -463,7 +464,23 @@ input:focus-visible,
   margin: 0 auto;
 }
 
-.cast-header > p {
+.cast-header-route {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.cast-header-route > a {
+  color: var(--gold);
+  font-size: 0.57rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-decoration-color: rgb(216 179 106 / 45%);
+  text-underline-offset: 0.35rem;
+  text-transform: uppercase;
+}
+
+.cast-header-route > p {
   display: flex;
   align-items: center;
   gap: 0.65rem;
@@ -475,7 +492,7 @@ input:focus-visible,
   text-transform: uppercase;
 }
 
-.cast-header > p span {
+.cast-header-route > p span {
   width: 0.35rem;
   aspect-ratio: 1;
   border-radius: 50%;
@@ -1003,7 +1020,7 @@ input:focus-visible,
 
 .selection-dock {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 2rem;
   margin-top: 4rem;
@@ -1024,6 +1041,37 @@ input:focus-visible,
   font-family: "GFS Didot", Georgia, serif;
   font-size: 1.6rem;
   font-weight: 400;
+}
+
+.price-signal {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.price-signal > span {
+  color: var(--muted);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.price-signal b {
+  color: var(--gold);
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.price-signal input {
+  width: 5.5rem;
+  padding: 0.15rem 0;
+  border: 0;
+  border-bottom: 1px solid rgb(216 179 106 / 45%);
+  border-radius: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
 }
 
 .selection-dock .intent-receipt {
@@ -1061,6 +1109,438 @@ input:focus-visible,
   animation: panel-in 180ms var(--ease-out) both;
 }
 
+.studio-shell {
+  --green: #a9c98e;
+  min-height: 100svh;
+  padding: clamp(1.25rem, 3vw, 3rem) clamp(1.25rem, 4vw, 4.5rem) 3rem;
+  background:
+    linear-gradient(90deg, rgb(216 179 106 / 4%) 1px, transparent 1px) 0 0 / 10vw 100%,
+    radial-gradient(circle at 80% 0%, rgb(216 179 106 / 9%), transparent 30rem),
+    #0a0a09;
+}
+
+.studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 96rem;
+  margin: 0 auto;
+}
+
+.studio-header nav {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  color: rgb(244 240 232 / 35%);
+  font-size: 0.57rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.studio-header nav a {
+  color: var(--gold);
+  text-underline-offset: 0.35rem;
+}
+
+.studio-locked .cast-gate {
+  max-width: 96rem;
+  margin: 0 auto;
+}
+
+.studio-loading {
+  min-height: calc(100svh - 8rem);
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--muted);
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: 1.5rem;
+}
+
+.studio-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(22rem, 0.75fr);
+  align-items: end;
+  gap: clamp(3rem, 8vw, 9rem);
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: clamp(5rem, 9vw, 9rem) 0 clamp(3rem, 6vw, 6rem);
+}
+
+.studio-hero h1 {
+  max-width: 10ch;
+  margin: 0;
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: clamp(4rem, 7.7vw, 8.5rem);
+  font-weight: 400;
+  line-height: 0.82;
+  letter-spacing: -0.05em;
+}
+
+.studio-hero h1 em {
+  color: var(--gold);
+  font-weight: 400;
+}
+
+.production-verdict {
+  padding: 1.6rem 0;
+  border-top: 1px solid var(--gold);
+  border-bottom: 1px solid var(--line);
+}
+
+.production-verdict p {
+  margin: 0 0 1.1rem;
+  color: var(--gold);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.production-verdict strong {
+  display: block;
+  color: var(--text);
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.8rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.production-verdict > span {
+  display: block;
+  margin-top: 0.9rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.production-verdict.is-greenlit {
+  border-color: var(--green);
+}
+
+.production-verdict.is-greenlit p,
+.production-verdict.is-greenlit strong {
+  color: var(--green);
+}
+
+.studio-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 96rem;
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.studio-metrics article {
+  min-width: 0;
+  padding: clamp(1.5rem, 3vw, 2.7rem) clamp(1rem, 2.5vw, 2.5rem);
+  border-right: 1px solid var(--line);
+}
+
+.studio-metrics article:first-child { padding-left: 0; }
+.studio-metrics article:last-child { border-right: 0; }
+
+.studio-metrics p,
+.studio-metrics span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.55rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.studio-metrics strong {
+  display: block;
+  margin: 0.55rem 0 0.4rem;
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: clamp(2.8rem, 5vw, 5.5rem);
+  font-weight: 400;
+  line-height: 0.9;
+}
+
+.studio-metrics span {
+  color: rgb(244 240 232 / 33%);
+  letter-spacing: 0.07em;
+}
+
+.production-board {
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: clamp(5rem, 8vw, 8rem) 0;
+}
+
+.production-board > header {
+  display: grid;
+  grid-template-columns: 1fr minmax(18rem, 0.5fr);
+  align-items: end;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.production-board h2 {
+  margin: 0;
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: clamp(2.8rem, 5vw, 5.5rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.production-board > header > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.sample-ledger {
+  border-top: 1px solid var(--line);
+}
+
+.sample-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(14rem, 1.1fr) minmax(14rem, 1fr) minmax(13rem, 0.8fr);
+  gap: clamp(1rem, 3vw, 3rem);
+  align-items: center;
+  padding: 1.3rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.sample-row.status-leading {
+  border-color: rgb(216 179 106 / 60%);
+}
+
+.sample-row.status-greenlit {
+  border-color: var(--green);
+}
+
+.sample-thumb {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.sample-thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.sample-thumb span {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  color: var(--text);
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: 0.8rem;
+  text-shadow: 0 0.1rem 0.5rem #000;
+}
+
+.sample-name > p {
+  margin: 0 0 0.45rem;
+  color: var(--gold);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.status-greenlit .sample-name > p {
+  color: var(--green);
+}
+
+.sample-name h3 {
+  margin: 0;
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: clamp(1.7rem, 3vw, 3rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.sample-name > span {
+  display: block;
+  margin-top: 0.65rem;
+  color: var(--muted);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sample-progress > div {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sample-progress b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sample-progress progress {
+  width: 100%;
+  height: 2px;
+  display: block;
+  margin: 0.85rem 0;
+  border: 0;
+  accent-color: var(--gold);
+  background: rgb(244 240 232 / 12%);
+}
+
+.sample-progress progress::-webkit-progress-bar { background: rgb(244 240 232 / 12%); }
+.sample-progress progress::-webkit-progress-value { background: var(--gold); }
+.status-greenlit .sample-progress progress { accent-color: var(--green); }
+.status-greenlit .sample-progress progress::-webkit-progress-value { background: var(--green); }
+
+.sample-progress small {
+  color: rgb(244 240 232 / 35%);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sample-row dl {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 0;
+}
+
+.sample-row dl div {
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
+}
+
+.sample-row dt {
+  color: var(--muted);
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sample-row dd {
+  margin: 0.45rem 0 0;
+  font-family: "GFS Didot", Georgia, serif;
+  font-size: 1.7rem;
+}
+
+.studio-footer {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 3rem;
+  max-width: 96rem;
+  margin: 0 auto;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.studio-footer p {
+  max-width: 46rem;
+  margin: 0;
+  color: rgb(244 240 232 / 46%);
+  font-size: 0.68rem;
+  line-height: 1.65;
+}
+
+.studio-footer b {
+  color: rgb(244 240 232 / 72%);
+}
+
+.studio-footer a {
+  flex: 0 0 auto;
+  color: var(--gold);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-underline-offset: 0.35rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .studio-hero {
+    grid-template-columns: 1fr minmax(18rem, 0.6fr);
+    gap: 3rem;
+  }
+
+  .sample-row {
+    grid-template-columns: 6rem 1fr 1fr;
+  }
+
+  .sample-row dl {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .studio-shell {
+    padding: 1.1rem 1.1rem 2.5rem;
+    background:
+      linear-gradient(90deg, rgb(216 179 106 / 4%) 1px, transparent 1px) 0 0 / 25vw 100%,
+      #0a0a09;
+  }
+
+  .studio-header .wordmark > span:last-child,
+  .studio-header nav span {
+    display: none;
+  }
+
+  .studio-hero,
+  .production-board > header {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-hero {
+    gap: 3rem;
+    padding: 4rem 0;
+  }
+
+  .studio-hero h1 {
+    font-size: clamp(3.6rem, 17vw, 5.5rem);
+  }
+
+  .studio-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-metrics article,
+  .studio-metrics article:first-child {
+    padding: 1.4rem 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .studio-metrics article:last-child {
+    border-bottom: 0;
+  }
+
+  .sample-row {
+    grid-template-columns: 5rem 1fr;
+    gap: 1rem;
+  }
+
+  .sample-progress,
+  .sample-row dl {
+    grid-column: 1 / -1;
+  }
+
+  .sample-row dl {
+    padding-left: 6rem;
+  }
+
+  .studio-footer {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
 .enter {
   animation: enter 440ms var(--ease-out) both;
 }
@@ -1081,6 +1561,11 @@ input:focus-visible,
   }
 
   .info summary:hover {
+    color: var(--text);
+  }
+
+  .studio-action:hover,
+  .cast-header-route > a:hover {
     color: var(--text);
   }
 
@@ -1169,8 +1654,7 @@ input:focus-visible,
   }
 
   .wordmark > span:last-child,
-  .edition,
-  .hero-action p {
+  .edition {
     display: none;
   }
 
@@ -1185,7 +1669,7 @@ input:focus-visible,
   }
 
   .hero h1 {
-    max-width: 7ch;
+    max-width: 9ch;
     font-size: clamp(4.4rem, 22vw, 7rem);
     line-height: 0.76;
   }
@@ -1201,11 +1685,18 @@ input:focus-visible,
   }
 
   .hero-action {
+    align-items: stretch;
+    flex-direction: column;
     margin-top: 1.6rem;
   }
 
   .primary-action {
     width: 100%;
+  }
+
+  .studio-action {
+    padding: 0.8rem 0;
+    text-align: center;
   }
 
   .footer {
@@ -1232,7 +1723,7 @@ input:focus-visible,
   }
 
   .cast-header .wordmark > span:last-child,
-  .cast-header > p {
+  .cast-header-route > p {
     display: none;
   }
 

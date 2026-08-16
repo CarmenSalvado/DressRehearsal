@@ -1,7 +1,7 @@
 import { assertSameOrigin } from "../../../../../lib/auth";
 import { jsonBody, ownedRequest } from "../../../../../lib/api";
 import { AppError, errorResponse } from "../../../../../lib/errors";
-import { recordFittingIntent } from "../../../../../lib/store";
+import { recordBackingIntent } from "../../../../../lib/store";
 
 export const runtime = "nodejs";
 
@@ -11,11 +11,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id } = await params;
     const { db } = ownedRequest(request, id);
     const body = await jsonBody(request);
-    if (body.kind !== "reserve_fitting") {
-      throw new AppError("invalid_intent", "Only the demo fitting action is supported.");
+    if (body.kind !== "back_design" || typeof body.willingPriceCents !== "number") {
+      throw new AppError("invalid_intent", "Choose a sample and enter the price you would pay.");
     }
-    recordFittingIntent(db, id);
-    return Response.json({ recorded: true, bookingCreated: false });
+    recordBackingIntent(db, id, body.willingPriceCents);
+    return Response.json({ recorded: true, paymentCreated: false });
   } catch (error) {
     return errorResponse(error);
   }

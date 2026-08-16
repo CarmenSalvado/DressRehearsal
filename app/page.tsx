@@ -1,7 +1,7 @@
 const looks = [
-  ["01", "Silver Headliner"],
-  ["02", "Crimson Entrance"],
-  ["03", "Midnight Icon"],
+  ["S–01", "Silver Headliner"],
+  ["S–02", "Crimson Entrance"],
+  ["S–03", "Midnight Icon"],
 ];
 
 export default function Home() {
@@ -24,38 +24,35 @@ export default function Home() {
           <span>Dress Rehearsal</span>
         </a>
         <span className="stage-label">
-          <span aria-hidden="true" /> Main Stage
+          <span aria-hidden="true" /> Pre-production live
         </span>
       </header>
 
       <section className="hero" aria-labelledby="hero-title">
         <p className="eyebrow enter enter-2">
-          Virtual costume casting <span aria-hidden="true">·</span> YouCam Apparel VTO
+          Demand before inventory <span aria-hidden="true">·</span> YouCam Apparel VTO
         </p>
         <h1 id="hero-title" className="enter enter-3">
-          Who are you
-          <em>tonight?</em>
+          Make what
+          <em>earns the spotlight.</em>
         </h1>
         <p className="hero-copy enter enter-4">
-          Audition three real statement looks on yourself. Choose the one worth meeting
-          under the fitting-room lights.
+          Put three unreleased samples on a real audience before placing a production order.
+          Selection becomes demand. Backing becomes the greenlight.
         </p>
         <div className="hero-action enter enter-5">
           <a className="primary-action" href="/cast">
-            <span>Begin casting</span>
+            <span>Enter audience preview</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 12h13M13 6l6 6-6 6" />
             </svg>
           </a>
-          <p>
-            One photo. Three garments.
-            <br />A visual preview—not fit advice.
-          </p>
+          <a className="studio-action" href="/studio">Open production room <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
-      <aside className="look-index enter enter-5" aria-label="Tonight's looks">
-        <p>Tonight&apos;s cast</p>
+      <aside className="look-index enter enter-5" aria-label="Samples in contention">
+        <p>Samples in contention</p>
         <ol>
           {looks.map(([number, name]) => (
             <li key={number}>
@@ -65,12 +62,12 @@ export default function Home() {
         </ol>
       </aside>
 
-      <p className="edition enter enter-4" aria-label="Private preview, 2026">
-        Private preview <span aria-hidden="true">/</span> 2026
+      <p className="edition enter enter-4" aria-label="First edition, pre-production">
+        First edition <span aria-hidden="true">/</span> Pre-production
       </p>
 
       <footer className="footer enter enter-5">
-        <p>© Dress Rehearsal</p>
+        <p>© Dress Rehearsal · Demand before inventory</p>
         <div className="footer-links">
           <details className="info">
             <summary>Privacy</summary>
@@ -87,8 +84,8 @@ export default function Home() {
             <div className="info-panel receipt-panel">
               <strong>Every result carries proof.</strong>
               <p>
-                Casting results are persistently labeled LIVE, RECORDED LIVE RUN or FAILED.
-                This landing artwork is editorial, not a VTO result.
+                Live YouCam results, selections and explicit backing stay distinct. No payment
+                is taken in this validation campaign.
               </p>
             </div>
           </details>

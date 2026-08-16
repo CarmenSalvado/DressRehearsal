@@ -9,6 +9,7 @@ import {
   markTaskLive,
   markTaskPending,
   markTaskStarted,
+  signalForSession,
   sessionTasks,
   type SessionRow,
   type TaskRow,
@@ -72,12 +73,14 @@ const messages: Record<string, string> = {
 
 export function projectSession(db: Db, session: SessionRow, now = Date.now()) {
   const tasks = sessionTasks(db, session.id);
+  const signal = signalForSession(db, session.id);
   return {
     sessionId: session.id,
     state: session.state,
     expiresAt: new Date(session.expires_at).toISOString(),
     selectedGarmentId: session.selected_garment_id,
-    fittingIntentRecorded: Boolean(session.fitting_intent_at),
+    backingIntentRecorded: Boolean(signal?.backed_at),
+    willingPriceCents: signal?.willing_price_cents ?? null,
     garments: catalog().map(({ configured: _configured, ...garment }) => garment),
     tasks: tasks.map((task) => projectTask(task, now)),
   };

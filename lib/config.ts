@@ -53,4 +53,8 @@ export function dailySessionLimit() {
   return Math.max(1, Number(process.env.DAILY_SESSION_LIMIT) || 10);
 }
 
+export function greenlightThreshold() {
+  return Math.max(1, Number(process.env.GREENLIGHT_THRESHOLD) || 25);
+}
+
 export const secureCookies = process.env.NODE_ENV === "production";

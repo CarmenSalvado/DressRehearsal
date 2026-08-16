@@ -4,19 +4,19 @@ const CATALOG = [
   {
     id: "silver-headliner",
     name: "Silver Headliner",
-    rental: "€180 · 3 nights",
+    targetPriceCents: 18000,
     env: "GARMENT_SILVER_URL",
   },
   {
     id: "crimson-entrance",
     name: "Crimson Entrance",
-    rental: "€210 · 3 nights",
+    targetPriceCents: 21000,
     env: "GARMENT_CRIMSON_URL",
   },
   {
     id: "midnight-icon",
     name: "Midnight Icon",
-    rental: "€195 · 3 nights",
+    targetPriceCents: 19500,
     env: "GARMENT_MIDNIGHT_URL",
   },
 ] as const;

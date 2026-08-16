@@ -7,7 +7,7 @@ import type { ChangeEvent, FormEvent } from "react";
 type Garment = {
   id: string;
   name: string;
-  rental: string;
+  targetPriceCents: number;
   image: string;
 };
 
@@ -25,7 +25,8 @@ type CastingSession = {
   state: string;
   expiresAt: string;
   selectedGarmentId: string | null;
-  fittingIntentRecorded: boolean;
+  backingIntentRecorded: boolean;
+  willingPriceCents: number | null;
   garments: Garment[];
   tasks: Task[];
 };
@@ -62,10 +63,16 @@ export default function CastPage() {
   const [preview, setPreview] = useState("");
   const [consent, setConsent] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
+  const [willingPrice, setWillingPrice] = useState(200);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
 
   const terminal = Boolean(session?.tasks.length) && session!.tasks.every((task) => task.state === "live" || task.state === "failed");
+
+  useEffect(() => {
+    const selected = session?.garments.find((garment) => garment.id === session.selectedGarmentId);
+    if (selected) setWillingPrice((session?.willingPriceCents ?? selected.targetPriceCents) / 100);
+  }, [session?.selectedGarmentId, session?.willingPriceCents]);
 
   useEffect(() => {
     if (!photo) {
@@ -205,7 +212,13 @@ export default function CastPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ garmentId }),
       });
-      setSession({ ...session, state: "selected", selectedGarmentId: garmentId });
+      setSession({
+        ...session,
+        state: "selected",
+        selectedGarmentId: garmentId,
+        backingIntentRecorded: session.selectedGarmentId === garmentId && session.backingIntentRecorded,
+        willingPriceCents: session.selectedGarmentId === garmentId ? session.willingPriceCents : null,
+      });
     } catch (reason) {
       setError(messageFor(reason));
     } finally {
@@ -227,17 +240,18 @@ export default function CastPage() {
     }
   }
 
-  async function reserveFitting() {
+  async function backDesign(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!session) return;
-    setBusy("reserve");
+    setBusy("back");
     setError("");
     try {
       await api(`/api/sessions/${session.sessionId}/intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "reserve_fitting" }),
+        body: JSON.stringify({ kind: "back_design", willingPriceCents: Math.round(willingPrice * 100) }),
       });
-      setSession({ ...session, fittingIntentRecorded: true });
+      setSession({ ...session, backingIntentRecorded: true, willingPriceCents: Math.round(willingPrice * 100) });
     } catch (reason) {
       setError(messageFor(reason));
     } finally {
@@ -256,6 +270,7 @@ export default function CastPage() {
       setPhoto(null);
       setConsent(false);
       setRightsConfirmed(false);
+      setWillingPrice(200);
       setPhase("portrait");
     } catch (reason) {
       setError(messageFor(reason));
@@ -271,13 +286,16 @@ export default function CastPage() {
           <span className="monogram" aria-hidden="true">DR</span>
           <span>Dress Rehearsal</span>
         </Link>
-        <p><span aria-hidden="true" /> Main stage · Casting room</p>
+        <div className="cast-header-route">
+          <Link href="/studio">Production room</Link>
+          <p><span aria-hidden="true" /> Audience preview · Live</p>
+        </div>
       </header>
 
       <nav className="cast-steps" aria-label="Casting progress">
         {(["access", "portrait", "reveal"] as Phase[]).map((step, index) => (
           <span key={step} className={phase === step ? "is-current" : index < ["access", "portrait", "reveal"].indexOf(phase) ? "is-done" : ""}>
-            <b>0{index + 1}</b> {step === "access" ? "Invitation" : step === "portrait" ? "Portrait" : "The reveal"}
+            <b>0{index + 1}</b> {step === "access" ? "Invitation" : step === "portrait" ? "Portrait" : "Verdict"}
           </span>
         ))}
       </nav>
@@ -285,9 +303,9 @@ export default function CastPage() {
       {phase === "access" && (
         <section className="cast-gate enter" aria-labelledby="access-title">
           <div className="gate-copy">
-            <p className="eyebrow">Private preview · Admit one</p>
-            <h1 id="access-title">Your fitting room is <em>ready.</em></h1>
-            <p>Enter the invitation code to begin a private, time-limited virtual casting.</p>
+            <p className="eyebrow">Private audience · First edition</p>
+            <h1 id="access-title">Help decide what gets <em>made.</em></h1>
+            <p>Three unreleased samples are competing for one production slot. Your verdict is part of the buying decision.</p>
           </div>
           <form className="access-ticket" onSubmit={enterStage}>
             <p>Dress Rehearsal</p>
@@ -296,10 +314,10 @@ export default function CastPage() {
               <input id="access-code" name="code" type="password" autoComplete="one-time-code" required autoFocus />
             </div>
             <button className="cast-action" disabled={Boolean(busy)}>
-              {busy === "access" ? "Checking invitation…" : "Enter the main stage"}
+              {busy === "access" ? "Checking invitation…" : "Enter the private preview"}
               <span aria-hidden="true">→</span>
             </button>
-            <small>Access expires after two hours.</small>
+            <small>One audience member · One demand signal · Two-hour access</small>
           </form>
         </section>
       )}
@@ -307,9 +325,9 @@ export default function CastPage() {
       {phase === "portrait" && (
         <section className="portrait-stage enter" aria-labelledby="portrait-title">
           <div className="portrait-intro">
-            <p className="eyebrow">Act I · Your portrait</p>
-            <h1 id="portrait-title">Give the clothes a clear <em>canvas.</em></h1>
-            <p>A single, front-facing photograph creates all three previews.</p>
+            <p className="eyebrow">Act I · A real audience</p>
+            <h1 id="portrait-title">Put the samples on <em>you.</em></h1>
+            <p>Your front-facing portrait lets three pre-production samples compete on something more useful than a stock model.</p>
           </div>
 
           <form className="portrait-form" onSubmit={startCasting}>
@@ -318,7 +336,7 @@ export default function CastPage() {
                 // A blob URL cannot be rendered by next/image.
                 <img src={preview} alt="Selected portrait preview" />
               ) : session?.state === "uploaded" ? (
-                <span><b>Portrait received</b><small>Ready to continue casting</small></span>
+                <span><b>Portrait received</b><small>Ready to audition the samples</small></span>
               ) : (
                 <span><b>Choose your portrait</b><small>JPEG, PNG or WebP · 1–10 MB</small></span>
               )}
@@ -343,7 +361,7 @@ export default function CastPage() {
               </label>
 
               <button className="cast-action" disabled={Boolean(busy)}>
-                {busy === "casting" ? "Preparing three looks…" : session?.state === "uploaded" ? "Continue casting" : "Cast all three looks"}
+                {busy === "casting" ? "Preparing three samples…" : session?.state === "uploaded" ? "Continue the audition" : "Audition all three samples"}
                 <span aria-hidden="true">→</span>
               </button>
               <p className="privacy-note">The original is normalized in memory and is not stored by this application.</p>
@@ -356,10 +374,10 @@ export default function CastPage() {
         <section className="reveal-stage enter" aria-labelledby="reveal-title">
           <div className="reveal-heading">
             <div>
-              <p className="eyebrow">Act II · The reveal</p>
-              <h1 id="reveal-title">Three entrances. <em>One choice.</em></h1>
+              <p className="eyebrow">Act II · The verdict</p>
+              <h1 id="reveal-title">Three samples. <em>One production slot.</em></h1>
             </div>
-            <p>{terminal ? "The casting is complete. Choose the look you want to meet in person." : "Your looks appear one by one as YouCam finishes each live run."}</p>
+            <p>{terminal ? "The audition is complete. Choose the sample you would bring into the collection." : "Each sample appears as YouCam finishes its live run. This is an appearance preview, not a fit claim."}</p>
           </div>
 
           <div className="look-grid" aria-live="polite" aria-busy={!terminal}>
@@ -376,10 +394,10 @@ export default function CastPage() {
                     <span className="look-number">0{index + 1}</span>
                   </div>
                   <div className="look-meta">
-                    <div><h2>{garment.name}</h2><p>{garment.rental}</p></div>
+                    <div><h2>{garment.name}</h2><p>Target retail · €{garment.targetPriceCents / 100}</p></div>
                     {task?.state === "live" && (
                       <button className="select-look" aria-pressed={selected} disabled={Boolean(busy)} onClick={() => !selected && selectLook(garment.id)}>
-                        {selected ? "Selected ✓" : busy === `select:${garment.id}` ? "Selecting…" : "Choose look"}
+                        {selected ? "Your finalist ✓" : busy === `select:${garment.id}` ? "Selecting…" : "Send to final"}
                       </button>
                     )}
                   </div>
@@ -395,22 +413,28 @@ export default function CastPage() {
           </div>
 
           {session.selectedGarmentId && (
-            <div className="selection-dock">
+            <form className="selection-dock" onSubmit={backDesign}>
               <div>
-                <p>Your selection</p>
+                <p>Your production vote</p>
                 <strong>{session.garments.find((garment) => garment.id === session.selectedGarmentId)?.name}</strong>
               </div>
-              {session.fittingIntentRecorded ? (
-                <p className="intent-receipt"><b>Interest recorded.</b> No booking was created.</p>
+              {session.backingIntentRecorded ? (
+                <p className="intent-receipt"><b>Demand signal recorded at €{session.willingPriceCents! / 100}.</b> No payment was taken.</p>
               ) : (
-                <button className="cast-action" disabled={Boolean(busy)} onClick={reserveFitting}>
-                  {busy === "reserve" ? "Recording…" : "Request a physical fitting"}<span aria-hidden="true">→</span>
-                </button>
+                <>
+                  <label className="price-signal">
+                    <span>Price you would genuinely pay</span>
+                    <b>€ <input type="number" min="50" max="1000" step="5" value={willingPrice} onChange={(event) => setWillingPrice(Number(event.target.value))} required /></b>
+                  </label>
+                  <button className="cast-action" disabled={Boolean(busy)}>
+                    {busy === "back" ? "Recording signal…" : "Back this design"}<span aria-hidden="true">→</span>
+                  </button>
+                </>
               )}
-            </div>
+            </form>
           )}
 
-          <button className="end-casting" disabled={Boolean(busy)} onClick={endCasting}>End casting and delete local record</button>
+          <button className="end-casting" disabled={Boolean(busy)} onClick={endCasting}>Withdraw and delete my local record</button>
         </section>
       )}
 
