@@ -7,7 +7,13 @@ const looks = [
 export default function Home() {
   return (
     <main className="landing">
-      <div className="stage-image" aria-hidden="true" />
+      <div className="stage-image" aria-hidden="true">
+        <div className="stage-scene">
+          <span className="dress dress-silver" />
+          <span className="dress dress-crimson" />
+          <span className="dress dress-midnight" />
+        </div>
+      </div>
       <div className="stage-glow" aria-hidden="true" />
       <div className="curtain curtain-left" aria-hidden="true" />
       <div className="curtain curtain-right" aria-hidden="true" />
