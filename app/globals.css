@@ -1023,6 +1023,12 @@ input:focus-visible,
   border-radius: 1.5rem;
   cursor: pointer;
   background: var(--paper);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.photo-drop.is-dragging {
+  border-color: var(--coral);
+  background: var(--coral-soft);
 }
 
 .photo-drop input {

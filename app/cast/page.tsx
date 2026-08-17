@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { Brand } from "../brand";
 import {
   styleLooks,
@@ -80,6 +80,7 @@ export default function CastPage() {
   const [styleProfile, setStyleProfile] = useState<StyleProfile>(emptyStyleProfile);
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
+  const [draggingPhoto, setDraggingPhoto] = useState(false);
   const [consent, setConsent] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [busy, setBusy] = useState("");
@@ -159,16 +160,29 @@ export default function CastPage() {
     }
   }
 
-  function choosePhoto(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
+  function selectPhoto(file: File | null) {
     setError("");
     if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size < 1024 * 1024 || file.size > 10 * 1024 * 1024)) {
-      event.target.value = "";
       setPhoto(null);
       setError("Choose a JPEG, PNG or WebP image between 1 MB and 10 MB.");
-      return;
+      return false;
     }
     setPhoto(file);
+    return true;
+  }
+
+  function choosePhoto(event: ChangeEvent<HTMLInputElement>) {
+    if (!selectPhoto(event.target.files?.[0] ?? null)) event.target.value = "";
+  }
+
+  function dropPhoto(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setDraggingPhoto(false);
+    if (session?.state !== "uploaded" && event.dataTransfer.files[0]) {
+      const input = event.currentTarget.querySelector("input");
+      if (input) input.value = "";
+      selectPhoto(event.dataTransfer.files[0]);
+    }
   }
 
   function togglePriority(id: string) {
@@ -494,14 +508,28 @@ export default function CastPage() {
           </div>
 
           <form className="portrait-form" onSubmit={startCasting}>
-            <label className={`photo-drop ${preview ? "has-photo" : ""}`} htmlFor="photo">
-              {preview ? (
+            <label
+              className={`photo-drop ${preview ? "has-photo" : ""} ${draggingPhoto ? "is-dragging" : ""}`}
+              htmlFor="photo"
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                if (session?.state !== "uploaded") setDraggingPhoto(true);
+              }}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDraggingPhoto(false);
+              }}
+              onDrop={dropPhoto}
+            >
+              {draggingPhoto ? (
+                <span><b>Drop it here</b><small>Release to use this photo</small></span>
+              ) : preview ? (
                 // A blob URL cannot be rendered by next/image.
                 <img src={preview} alt="Selected portrait preview" />
               ) : session?.state === "uploaded" ? (
                 <span><b>Photo received</b><small>Your three looks are ready to begin</small></span>
               ) : (
-                <span><b>Add a full-body photo</b><small>JPEG, PNG or WebP · 1–10 MB</small></span>
+                <span><b>Drag &amp; drop a full-body photo</b><small>or click to browse · JPEG, PNG or WebP · 1–10 MB</small></span>
               )}
               {session?.state !== "uploaded" && <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} />}
               <i aria-hidden="true">+</i>
