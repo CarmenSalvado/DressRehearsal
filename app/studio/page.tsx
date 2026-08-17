@@ -144,7 +144,7 @@ export default function StudioPage() {
       <section className="studio-hero enter">
         <div>
           <p className="eyebrow"><span aria-hidden="true">✦</span> {report.campaign.name}</p>
-          <h1>See what people love <em>and what they&apos;d buy.</em></h1>
+          <h1>See what people love <em>and what they’d buy.</em></h1>
         </div>
         <div className={`production-verdict ${reviewCandidate ? "is-ready" : ""}`}>
           <p>{favoriteDiverges ? "Audience favorite ≠ commercial favorite" : commercialTie ? "Commercial evidence is tied" : audienceTie ? "Audience preference is tied" : reviewCandidate ? "Buyer review ready" : "One inventory decision"}</p>

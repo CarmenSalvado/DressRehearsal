@@ -340,7 +340,7 @@ export default function CastPage() {
       {phase === "access" && (
         <section className="cast-gate enter" aria-labelledby="access-title">
           <div className="gate-copy">
-            <p className="eyebrow"><span aria-hidden="true">✦</span> You&apos;re invited</p>
+            <p className="eyebrow"><span aria-hidden="true">✦</span> You’re invited</p>
             <h1 id="access-title">You have a say in what gets <em>made.</em></h1>
             <p>Try three unreleased looks on you. Choose the one you love, then tell the brand if the target price feels right.</p>
           </div>
@@ -489,7 +489,7 @@ export default function CastPage() {
         <section className="portrait-stage enter" aria-labelledby="portrait-title">
           <div className="portrait-intro">
             <p className="eyebrow"><span aria-hidden="true">✦</span> Make it personal</p>
-            <h1 id="portrait-title">Let&apos;s see the looks on <em>you.</em></h1>
+            <h1 id="portrait-title">Let’s see the looks on <em>you.</em></h1>
             <p>A clear full-body photo helps create your three previews. It is processed for this fitting and not saved by Dress Rehearsal.</p>
           </div>
 
@@ -501,7 +501,7 @@ export default function CastPage() {
               ) : session?.state === "uploaded" ? (
                 <span><b>Photo received</b><small>Your three looks are ready to begin</small></span>
               ) : (
-                <span><b>Add a full-body photo</b><small>JPEG, PNG or WebP · 1-10 MB</small></span>
+                <span><b>Add a full-body photo</b><small>JPEG, PNG or WebP · 1–10 MB</small></span>
               )}
               {session?.state !== "uploaded" && <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} />}
               <i aria-hidden="true">+</i>
@@ -559,7 +559,7 @@ export default function CastPage() {
                   <div className="look-meta">
                     <div>
                       <h2>{garment.name}</h2>
-                      <p>{selected && garment.targetPriceCents !== null ? `Target retail revealed · €${garment.targetPriceCents / 100}` : "Target retail revealed after selection"}</p>
+                      <p>{selected && garment.targetPriceCents !== null ? `Target retail revealed · ${euros(garment.targetPriceCents)}` : "Target retail revealed after selection"}</p>
                     </div>
                     {task?.state === "live" && (
                       <button
@@ -591,18 +591,18 @@ export default function CastPage() {
               </div>
               {session.purchaseIntentRecorded ? (
                 <p className="intent-receipt">
-                  <b>{session.wouldBuyAtTarget ? `Yes at €${selectedGarment.targetPriceCents / 100}` : `Not at €${selectedGarment.targetPriceCents / 100}`}</b>
+                  <b>{session.wouldBuyAtTarget ? `Yes at ${euros(selectedGarment.targetPriceCents)}` : `Not at ${euros(selectedGarment.targetPriceCents)}`}</b>
                     Thanks, your answer is saved. No payment or preorder was created.
                 </p>
               ) : (
                 <>
                   <div className="price-signal">
                     <span>One last, useful question</span>
-                    <b>Would you consider buying it at €{selectedGarment.targetPriceCents / 100}?</b>
+                    <b>Would you consider buying it at {euros(selectedGarment.targetPriceCents)}?</b>
                   </div>
                   <div className="intent-actions">
                     <button className="cast-action" disabled={Boolean(busy)} onClick={() => recordPurchaseIntent(true)}>
-                      {busy === "intent:yes" ? "Recording…" : `Yes, at €${selectedGarment.targetPriceCents / 100}`}<span aria-hidden="true">→</span>
+                      {busy === "intent:yes" ? "Recording…" : `Yes, at ${euros(selectedGarment.targetPriceCents)}`}<span aria-hidden="true">→</span>
                     </button>
                     <button className="intent-decline" disabled={Boolean(busy)} onClick={() => recordPurchaseIntent(false)}>
                       {busy === "intent:no" ? "Recording…" : "Not at this price"}
@@ -624,6 +624,10 @@ export default function CastPage() {
 
 function messageFor(reason: unknown) {
   return reason instanceof Error ? reason.message : "The stage hit an unexpected problem.";
+}
+
+function euros(cents: number) {
+  return `€${Math.round(cents / 100)}`;
 }
 
 function labelFor(options: readonly { id: string; label: string }[], id: string) {

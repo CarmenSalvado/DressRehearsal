@@ -9,7 +9,7 @@
   --mint: #bcd9c9;
   --sky: #b9dce7;
   --line: #d7d1c6;
-  --focus: #1768d1;
+  --focus: #1a1a1a;
   --success: #287653;
   --error: #a83b32;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -30,6 +30,11 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+[id] {
+  scroll-margin-top: 2rem;
 }
 
 button,
@@ -148,7 +153,6 @@ input:focus-visible,
 .landing-nav {
   display: flex;
   align-items: center;
-  gap: 1.4rem;
   gap: clamp(1.2rem, 3vw, 3rem);
   font-size: 0.72rem;
   font-weight: 600;
@@ -230,7 +234,7 @@ input:focus-visible,
   font-size: clamp(4.5rem, 6vw, 6.6rem);
   font-weight: 500;
   letter-spacing: -0.055em;
-  line-height: 0.82;
+  line-height: 0.94;
 }
 
 .editorial-copy h1 span {
@@ -243,6 +247,8 @@ input:focus-visible,
   display: block;
   margin-top: 2rem;
   background: var(--coral);
+  pointer-events: none;
+  user-select: none;
 }
 
 .hero-copy {
@@ -273,12 +279,13 @@ input:focus-visible,
   cursor: pointer;
   text-decoration: none;
   font-weight: 700;
-  transition: transform 160ms var(--ease-out), background-color 160ms ease;
+  transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease;
 }
 
 .primary-action {
   min-width: 15rem;
-  padding: 0 1.2rem;
+  /* Trailing arrow: icon-side padding sits 2px tighter so it reads optically centred. */
+  padding: 0 calc(1.2rem - 2px) 0 1.2rem;
   border-color: var(--coral);
   border-radius: 0;
   background: var(--coral);
@@ -948,7 +955,7 @@ input:focus-visible,
 
 .primary-action:active,
 .cast-action:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .cast-action:disabled,
@@ -1281,7 +1288,7 @@ input:focus-visible,
   position: fixed;
   z-index: 10;
   right: 1.25rem;
-  bottom: 1.25rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom));
   width: min(28rem, calc(100vw - 2.5rem));
   margin: 0;
   padding: 1rem 1.15rem;
@@ -1742,9 +1749,14 @@ input:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .enter,
   .info-panel,
+  .quiz-panel,
+  .cast-error,
   .look-state span { animation: none; }
   .primary-action,
   .cast-action,
+  .quiz-text-card,
+  .quiz-palette-card,
+  .quiz-image-card,
   .look-card { transition-duration: 1ms; }
 }
 
@@ -1948,7 +1960,7 @@ input:focus-visible,
   text-transform: uppercase;
 }
 
-.cast-action { padding: 0 1.1rem; }
+.cast-action { padding: 0 calc(1.1rem - 2px) 0 1.1rem; }
 
 .cast-action span,
 .access-ticket .cast-action span {
@@ -2285,6 +2297,72 @@ input:focus-visible,
   .look-card:hover { transform: none; }
 }
 
+/* Polish pass: number stability, hit areas, safe areas, press feedback. */
+
+/* Anything that updates while you watch it (polled counts, prices, progress). */
+.cast-steps,
+.quiz-status,
+.quiz-kicker,
+.look-meta p,
+.selection-dock,
+.price-signal b,
+.intent-receipt,
+.studio-metrics,
+.production-verdict,
+.style-pulse > header > p,
+.style-pulse-grid,
+.style-demand-rack,
+.sample-row,
+.cast-action {
+  font-variant-numeric: tabular-nums;
+}
+
+.style-pulse h2,
+.production-board h2,
+.look-meta h2,
+.sample-name h3,
+.photo-drop b,
+.info-panel strong { text-wrap: balance; }
+
+/* Names arrive from the API and can be long or tied ("Look A / Look B"). */
+.studio-metrics strong,
+.production-verdict strong,
+.style-pulse-grid strong,
+.sample-name h3 { overflow-wrap: break-word; }
+
+/* Text-only controls: pseudo-element grows the target past the glyph box.
+   Insets stay under the smallest neighbouring gap so targets never overlap. */
+.landing-nav a,
+.cast-header-route > a,
+.studio-header nav a,
+.info summary,
+.select-look,
+.look-error button,
+.end-casting,
+.intent-decline { position: relative; }
+
+.landing-nav a::before,
+.cast-header-route > a::before,
+.studio-header nav a::before,
+.info summary::before,
+.select-look::before,
+.look-error button::before,
+.end-casting::before,
+.intent-decline::before {
+  content: "";
+  position: absolute;
+  inset: -0.95rem -0.4rem;
+}
+
+.select-look::before,
+.look-error button::before,
+.end-casting::before,
+.intent-decline::before { inset: -0.65rem -0.5rem; }
+
+.quiz-text-card:active:not(:disabled),
+.quiz-palette-card:active:not(:disabled),
+.quiz-image-card:active:not(:disabled) { transform: scale(0.96); }
+
 @media (max-width: 700px) {
   .cast-shell,
   .studio-shell { padding: 1rem; }
@@ -2326,4 +2404,29 @@ input:focus-visible,
   .style-pulse-grid,
   .style-demand-rack { grid-template-columns: 1fr; }
   .style-demand-rack article { grid-template-columns: 5rem 1fr auto; }
+}
+
+/* Notches and home indicators: current gutters stay the floor. */
+.landing,
+.cast-shell,
+.studio-shell {
+  padding-right: max(clamp(1.25rem, 3.5vw, 3.5rem), env(safe-area-inset-right));
+  padding-left: max(clamp(1.25rem, 3.5vw, 3.5rem), env(safe-area-inset-left));
+}
+
+.landing { padding-bottom: max(1.1rem, env(safe-area-inset-bottom)); }
+.cast-shell,
+.studio-shell { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+
+@media (max-width: 700px) {
+  .landing,
+  .cast-shell,
+  .studio-shell {
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .landing { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+  .cast-shell,
+  .studio-shell { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 }
