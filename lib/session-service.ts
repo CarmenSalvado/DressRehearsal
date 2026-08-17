@@ -79,9 +79,12 @@ export function projectSession(db: Db, session: SessionRow, now = Date.now()) {
     state: session.state,
     expiresAt: new Date(session.expires_at).toISOString(),
     selectedGarmentId: session.selected_garment_id,
-    backingIntentRecorded: Boolean(signal?.backed_at),
-    willingPriceCents: signal?.willing_price_cents ?? null,
-    garments: catalog().map(({ configured: _configured, ...garment }) => garment),
+    purchaseIntentRecorded: Boolean(signal?.intent_recorded_at),
+    wouldBuyAtTarget: signal?.intent_recorded_at ? Boolean(signal.target_price_accepted) : null,
+    garments: catalog().map(({ configured: _configured, ...garment }) => ({
+      ...garment,
+      targetPriceCents: session.selected_garment_id === garment.id ? garment.targetPriceCents : null,
+    })),
     tasks: tasks.map((task) => projectTask(task, now)),
   };
 }

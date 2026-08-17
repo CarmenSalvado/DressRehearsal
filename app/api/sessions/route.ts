@@ -7,6 +7,7 @@ import { getDb } from "../../../lib/db";
 import { AppError, errorResponse } from "../../../lib/errors";
 import { projectSession } from "../../../lib/session-service";
 import { createSession, ownedSession } from "../../../lib/store";
+import { isStyleProfile } from "../../../lib/style-profile";
 
 export const runtime = "nodejs";
 
@@ -18,13 +19,16 @@ export async function POST(request: Request) {
     if (body.consent !== true || body.rightsConfirmed !== true || body.scene !== "main-stage") {
       throw new AppError("consent_required", "Consent and image rights confirmation are required.");
     }
+    if (!isStyleProfile(body.styleProfile)) {
+      throw new AppError("invalid_style_profile", "Complete the style edit before adding your photograph.");
+    }
 
     youcamApiKey();
     for (const garmentId of garmentIds) garmentReferenceUrl(garmentId);
 
     const ownerToken = newOwnerToken();
     const db = getDb();
-    const created = createSession(db, hashOwnerToken(ownerToken));
+    const created = createSession(db, hashOwnerToken(ownerToken), Date.now(), JSON.stringify(body.styleProfile));
     const session = ownedSession(db, created.id, hashOwnerToken(ownerToken));
     const response = NextResponse.json(projectSession(db, session), { status: 201 });
     response.cookies.set(OWNER_COOKIE, `${created.id}.${ownerToken}`, ownerCookieOptions);

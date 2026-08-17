@@ -17,6 +17,10 @@ export function accessCode() {
   return required("DEMO_ACCESS_CODE");
 }
 
+export function buyingRoomAccessCode() {
+  return required("BUYING_ROOM_ACCESS_CODE");
+}
+
 export function sessionSecret() {
   const value = required("SESSION_SECRET");
   if (value.length < 32) {
@@ -53,8 +57,8 @@ export function dailySessionLimit() {
   return Math.max(1, Number(process.env.DAILY_SESSION_LIMIT) || 10);
 }
 
-export function greenlightThreshold() {
-  return Math.max(1, Number(process.env.GREENLIGHT_THRESHOLD) || 25);
+export function reviewThreshold() {
+  return Math.max(1, Number(process.env.REVIEW_THRESHOLD ?? process.env.GREENLIGHT_THRESHOLD) || 25);
 }
 
 export const secureCookies = process.env.NODE_ENV === "production";

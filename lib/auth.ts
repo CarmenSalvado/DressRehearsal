@@ -1,8 +1,9 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { accessCode, secureCookies, sessionSecret, SESSION_TTL_MS } from "./config.ts";
+import { accessCode, buyingRoomAccessCode, secureCookies, sessionSecret, SESSION_TTL_MS } from "./config.ts";
 import { AppError } from "./errors.ts";
 
 export const ACCESS_COOKIE = "dr_access";
+export const BUYING_ROOM_ACCESS_COOKIE = "dr_buying_room_access";
 export const OWNER_COOKIE = "dr_owner";
 
 function digest(value: string) {
@@ -14,8 +15,16 @@ function signature(value: string) {
 }
 
 export function verifyAccessCode(value: unknown) {
+  return verifyCode(value, accessCode());
+}
+
+export function verifyBuyingRoomAccessCode(value: unknown) {
+  return verifyCode(value, buyingRoomAccessCode());
+}
+
+function verifyCode(value: unknown, expected: string) {
   if (typeof value !== "string" || value.length > 200) return false;
-  return timingSafeEqual(digest(value), digest(accessCode()));
+  return timingSafeEqual(digest(value), digest(expected));
 }
 
 export function createAccessToken(now = Date.now()) {
@@ -51,6 +60,12 @@ export function cookieValue(request: Request, name: string) {
 export function requireAccess(request: Request) {
   if (!verifyAccessToken(cookieValue(request, ACCESS_COOKIE))) {
     throw new AppError("access_required", "Enter the demo access code first.", 401);
+  }
+}
+
+export function requireBuyingRoomAccess(request: Request) {
+  if (!verifyAccessToken(cookieValue(request, BUYING_ROOM_ACCESS_COOKIE))) {
+    throw new AppError("buying_room_access_required", "Enter the buying-room access code first.", 401);
   }
 }
 

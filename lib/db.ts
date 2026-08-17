@@ -18,6 +18,7 @@ export function createDatabase(filename: string) {
       selected_garment_id TEXT,
       source_file_id TEXT,
       start_key TEXT,
+      style_profile_json TEXT,
       created_at INTEGER NOT NULL,
       expires_at INTEGER NOT NULL
     );
@@ -55,6 +56,8 @@ export function createDatabase(filename: string) {
         willing_price_cents IS NULL OR willing_price_cents BETWEEN 5000 AND 100000
       ),
       backed_at INTEGER,
+      target_price_accepted INTEGER CHECK (target_price_accepted IN (0, 1)),
+      intent_recorded_at INTEGER,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -69,7 +72,16 @@ export function createDatabase(filename: string) {
     CREATE INDEX IF NOT EXISTS usage_created ON usage_events(created_at);
     CREATE INDEX IF NOT EXISTS signals_garment ON campaign_signals(garment_id, backed_at);
   `);
+  addColumnIfMissing(db, "campaign_signals", "target_price_accepted", "target_price_accepted INTEGER CHECK (target_price_accepted IN (0, 1))");
+  addColumnIfMissing(db, "campaign_signals", "intent_recorded_at", "intent_recorded_at INTEGER");
+  addColumnIfMissing(db, "sessions", "style_profile_json", "style_profile_json TEXT");
+  db.exec("CREATE INDEX IF NOT EXISTS signals_target_intent ON campaign_signals(garment_id, intent_recorded_at, target_price_accepted)");
   return db;
+}
+
+function addColumnIfMissing(db: DatabaseSync, table: string, column: string, definition: string) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  if (!columns.some((item) => item.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
 }
 
 export function getDb() {

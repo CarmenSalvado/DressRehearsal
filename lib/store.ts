@@ -1,8 +1,9 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
-import { dailySessionLimit, globalConcurrency, greenlightThreshold, pollIntervalMs, RESULT_URL_TTL_MS, SESSION_TTL_MS } from "./config.ts";
+import { dailySessionLimit, globalConcurrency, pollIntervalMs, RESULT_URL_TTL_MS, reviewThreshold, SESSION_TTL_MS } from "./config.ts";
 import type { Db } from "./db.ts";
 import { AppError } from "./errors.ts";
 import { catalog, garmentIds, isGarmentId } from "./catalog.ts";
+import { isStyleProfile } from "./style-profile.ts";
 
 export type SessionRow = {
   id: string;
@@ -12,6 +13,7 @@ export type SessionRow = {
   selected_garment_id: string | null;
   source_file_id: string | null;
   start_key: string | null;
+  style_profile_json: string | null;
   created_at: number;
   expires_at: number;
 };
@@ -38,6 +40,8 @@ type SignalRow = {
   garment_id: string;
   willing_price_cents: number | null;
   backed_at: number | null;
+  target_price_accepted: number | null;
+  intent_recorded_at: number | null;
   created_at: number;
   updated_at: number;
 };
@@ -62,7 +66,7 @@ export function cleanupExpired(db: Db, now = Date.now()) {
   });
 }
 
-export function createSession(db: Db, ownerHash: string, now = Date.now()) {
+export function createSession(db: Db, ownerHash: string, now = Date.now(), styleProfileJson: string | null = null) {
   cleanupExpired(db, now);
   return transaction(db, () => {
     const day = new Date(now).toISOString().slice(0, 10);
@@ -79,9 +83,9 @@ export function createSession(db: Db, ownerHash: string, now = Date.now()) {
       expiresAt: now + SESSION_TTL_MS,
     };
     db.prepare(`
-      INSERT INTO sessions (id, owner_token_hash, state, consent_at, created_at, expires_at)
-      VALUES (?, ?, 'created', ?, ?, ?)
-    `).run(session.id, session.ownerHash, now, now, session.expiresAt);
+      INSERT INTO sessions (id, owner_token_hash, state, consent_at, style_profile_json, created_at, expires_at)
+      VALUES (?, ?, 'created', ?, ?, ?, ?)
+    `).run(session.id, session.ownerHash, now, styleProfileJson, now, session.expiresAt);
     db.prepare(`
       INSERT INTO daily_counters (day, sessions) VALUES (?, 1)
       ON CONFLICT(day) DO UPDATE SET sessions = sessions + 1
@@ -254,9 +258,19 @@ export function queueRetry(db: Db, sessionId: string, garmentId: string, now = D
 
 export function selectGarment(db: Db, sessionId: string, garmentId: string, now = Date.now()) {
   if (!isGarmentId(garmentId)) throw new AppError("invalid_garment", "Choose a garment from this casting.");
-  const task = db.prepare(`
-    SELECT 1 FROM tasks WHERE session_id = ? AND garment_id = ? AND state = 'live'
-  `).get(sessionId, garmentId);
+  const session = db.prepare("SELECT selected_garment_id FROM sessions WHERE id = ?")
+    .get(sessionId) as { selected_garment_id: string | null } | undefined;
+  if (!session) throw new AppError("session_not_found", "This casting session is unavailable.", 404);
+  if (session.selected_garment_id) {
+    if (session.selected_garment_id === garmentId) return;
+    throw new AppError("decision_locked", "Your sample choice is already locked.", 409);
+  }
+  const tasks = db.prepare("SELECT garment_id, state FROM tasks WHERE session_id = ?")
+    .all(sessionId) as Array<{ garment_id: string; state: string }>;
+  if (tasks.length !== garmentIds.length || tasks.some((item) => item.state !== "live" && item.state !== "failed")) {
+    throw new AppError("invalid_state", "Wait for all three sample results before choosing.", 409);
+  }
+  const task = tasks.find((item) => item.garment_id === garmentId && item.state === "live");
   if (!task) throw new AppError("invalid_state", "Only a completed look can be selected.", 409);
   transaction(db, () => {
     db.prepare("UPDATE sessions SET selected_garment_id = ?, state = 'selected' WHERE id = ?")
@@ -280,29 +294,32 @@ export function selectGarment(db: Db, sessionId: string, garmentId: string, now 
   });
 }
 
-export function recordBackingIntent(db: Db, sessionId: string, willingPriceCents: number, now = Date.now()) {
-  if (!Number.isInteger(willingPriceCents) || willingPriceCents < 5000 || willingPriceCents > 100000) {
-    throw new AppError("invalid_price", "Enter a whole price between €50 and €1,000.");
-  }
+export function recordTargetPriceIntent(db: Db, sessionId: string, wouldBuyAtTarget: boolean, now = Date.now()) {
   const session = db.prepare("SELECT selected_garment_id FROM sessions WHERE id = ?")
     .get(sessionId) as { selected_garment_id: string | null };
   if (!session.selected_garment_id) {
-    throw new AppError("invalid_state", "Choose a completed sample before backing it.", 409);
+    throw new AppError("invalid_state", "Choose a completed sample before recording purchase intent.", 409);
+  }
+  const existing = signalForSession(db, sessionId);
+  if (existing?.intent_recorded_at) {
+    if (Boolean(existing.target_price_accepted) === wouldBuyAtTarget) return;
+    throw new AppError("decision_locked", "Your target-price response is already locked.", 409);
   }
   transaction(db, () => {
     db.prepare(`
       INSERT INTO campaign_signals (
-        session_id, garment_id, willing_price_cents, backed_at, created_at, updated_at
+        session_id, garment_id, target_price_accepted, intent_recorded_at, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(session_id) DO UPDATE SET
         garment_id = excluded.garment_id,
-        willing_price_cents = excluded.willing_price_cents,
-        backed_at = COALESCE(campaign_signals.backed_at, excluded.backed_at),
+        target_price_accepted = excluded.target_price_accepted,
+        intent_recorded_at = COALESCE(campaign_signals.intent_recorded_at, excluded.intent_recorded_at),
         updated_at = excluded.updated_at
-    `).run(sessionId, session.selected_garment_id, willingPriceCents, now, now, now);
-    const exists = db.prepare("SELECT 1 FROM usage_events WHERE session_id = ? AND event = 'design_backed'")
-      .get(sessionId);
-    if (!exists) recordEvent(db, sessionId, "design_backed", session.selected_garment_id, now);
+    `).run(sessionId, session.selected_garment_id, wouldBuyAtTarget ? 1 : 0, now, now, now);
+    const event = wouldBuyAtTarget ? "target_price_accepted" : "target_price_declined";
+    const exists = db.prepare("SELECT 1 FROM usage_events WHERE session_id = ? AND event = ?")
+      .get(sessionId, event);
+    if (!exists) recordEvent(db, sessionId, event, session.selected_garment_id, now);
   });
 }
 
@@ -312,56 +329,92 @@ export function signalForSession(db: Db, sessionId: string) {
 
 export function campaignReport(db: Db) {
   // ponytail: one fixed campaign; add a campaigns table when this becomes multi-brand.
-  const threshold = greenlightThreshold();
+  const threshold = reviewThreshold();
   const rows = db.prepare(`
     SELECT garment_id,
       COUNT(*) AS decisions,
-      SUM(CASE WHEN backed_at IS NOT NULL THEN 1 ELSE 0 END) AS backers,
-      ROUND(AVG(CASE WHEN backed_at IS NOT NULL THEN willing_price_cents END)) AS average_price
+      SUM(CASE WHEN intent_recorded_at IS NOT NULL THEN 1 ELSE 0 END) AS price_responses,
+      SUM(CASE WHEN intent_recorded_at IS NOT NULL AND target_price_accepted = 1 THEN 1 ELSE 0 END) AS qualified_intents
     FROM campaign_signals
     GROUP BY garment_id
   `).all() as Array<{
     garment_id: string;
     decisions: number;
-    backers: number;
-    average_price: number | null;
+    price_responses: number;
+    qualified_intents: number;
   }>;
   const byGarment = new Map(rows.map((row) => [row.garment_id, row]));
   const decisions = rows.reduce((total, row) => total + row.decisions, 0);
-  const backers = rows.reduce((total, row) => total + row.backers, 0);
-  const leader = [...rows].sort((a, b) => b.backers - a.backers || b.decisions - a.decisions)[0];
-  const greenlitId = leader?.backers >= threshold ? leader.garment_id : null;
+  const priceResponses = rows.reduce((total, row) => total + row.price_responses, 0);
+  const qualifiedIntents = rows.reduce((total, row) => total + row.qualified_intents, 0);
+  const topDecisionCount = Math.max(0, ...rows.map((row) => row.decisions));
+  const topQualifiedCount = Math.max(0, ...rows.map((row) => row.qualified_intents));
+  const audienceFavoriteIds = topDecisionCount
+    ? garmentIds.filter((id) => rows.some((row) => row.garment_id === id && row.decisions === topDecisionCount))
+    : [];
+  const commercialFavoriteIds = topQualifiedCount
+    ? garmentIds.filter((id) => rows.some((row) => row.garment_id === id && row.qualified_intents === topQualifiedCount))
+    : [];
+  const reviewCandidateId = commercialFavoriteIds.length === 1 && topQualifiedCount >= threshold
+    ? commercialFavoriteIds[0]
+    : null;
+  const profiles = (db.prepare("SELECT style_profile_json FROM sessions WHERE style_profile_json IS NOT NULL").all() as Array<{ style_profile_json: string }>)
+    .flatMap(({ style_profile_json }) => {
+      try {
+        const profile: unknown = JSON.parse(style_profile_json);
+        return isStyleProfile(profile) ? [profile] : [];
+      } catch {
+        return [];
+      }
+    });
 
   return {
     campaign: {
       id: "first-edition",
       name: "The First Edition",
       productionSlots: 1,
-      greenlightThreshold: threshold,
-      greenlitGarmentId: greenlitId,
+      reviewThreshold: threshold,
+      audienceFavoriteGarmentIds: audienceFavoriteIds,
+      commercialFavoriteGarmentIds: commercialFavoriteIds,
+      reviewCandidateGarmentId: reviewCandidateId,
     },
     totals: {
       decisions,
-      backers,
-      backingRate: decisions ? Math.round((backers / decisions) * 100) : 0,
+      priceResponses,
+      qualifiedIntents,
+      qualificationRate: priceResponses ? Math.round((qualifiedIntents / priceResponses) * 100) : 0,
+    },
+    styleSignals: {
+      responses: profiles.length,
+      occasions: ranked(profiles.map((profile) => profile.occasion)),
+      silhouettes: ranked(profiles.map((profile) => profile.silhouette)),
+      palettes: ranked(profiles.map((profile) => profile.palette)),
+      priorities: ranked(profiles.flatMap((profile) => profile.priorities)),
+      looks: ranked(profiles.flatMap((profile) => profile.lookIds)),
     },
     garments: catalog().map(({ configured: _configured, ...garment }) => {
       const row = byGarment.get(garment.id);
-      const garmentBackers = row?.backers ?? 0;
+      const garmentResponses = row?.price_responses ?? 0;
+      const garmentQualifiedIntents = row?.qualified_intents ?? 0;
       return {
         ...garment,
         decisions: row?.decisions ?? 0,
-        backers: garmentBackers,
-        averageWillingPriceCents: row?.average_price ?? null,
-        progress: Math.min(100, Math.round((garmentBackers / threshold) * 100)),
-        status: greenlitId === garment.id
-          ? "greenlit"
-          : leader?.garment_id === garment.id && decisions > 0
-            ? "leading"
-            : "collecting",
+        priceResponses: garmentResponses,
+        qualifiedIntents: garmentQualifiedIntents,
+        qualificationRate: garmentResponses ? Math.round((garmentQualifiedIntents / garmentResponses) * 100) : 0,
+        progress: Math.min(100, Math.round((garmentQualifiedIntents / threshold) * 100)),
+        isAudienceFavorite: audienceFavoriteIds.includes(garment.id),
+        isCommercialFavorite: commercialFavoriteIds.includes(garment.id),
+        isReviewReady: reviewCandidateId === garment.id,
       };
     }),
   };
+}
+
+function ranked(values: string[]) {
+  const counts = new Map<string, number>();
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+  return [...counts].map(([id, count]) => ({ id, count })).sort((a, b) => b.count - a.count || a.id.localeCompare(b.id));
 }
 
 export function resultTask(db: Db, sessionId: string, garmentId: string, now = Date.now()) {

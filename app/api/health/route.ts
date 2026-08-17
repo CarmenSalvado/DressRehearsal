@@ -7,6 +7,7 @@ export function GET() {
   const configured = Boolean(
     process.env.YOUCAM_API_KEY
     && process.env.DEMO_ACCESS_CODE
+    && process.env.BUYING_ROOM_ACCESS_CODE
     && (process.env.SESSION_SECRET?.length ?? 0) >= 32
     && garments.every((garment) => garment.configured),
   );
@@ -19,6 +20,7 @@ export function GET() {
     configured: {
       apiKey: Boolean(process.env.YOUCAM_API_KEY),
       accessCode: Boolean(process.env.DEMO_ACCESS_CODE),
+      buyingRoomAccessCode: Boolean(process.env.BUYING_ROOM_ACCESS_CODE),
       sessionSecret: (process.env.SESSION_SECRET?.length ?? 0) >= 32,
       garments: garments.map(({ id, configured: ready }) => ({ id, configured: ready })),
     },

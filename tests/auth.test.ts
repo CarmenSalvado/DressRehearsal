@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assertSameOrigin, createAccessToken, verifyAccessCode, verifyAccessToken } from "../lib/auth.ts";
+import { assertSameOrigin, createAccessToken, verifyAccessCode, verifyAccessToken, verifyBuyingRoomAccessCode } from "../lib/auth.ts";
 
 process.env.SESSION_SECRET = "test-secret-that-is-longer-than-thirty-two-characters";
 process.env.DEMO_ACCESS_CODE = "stage-door";
+process.env.BUYING_ROOM_ACCESS_CODE = "buyer-door";
 
 test("access tokens are signed and expire", () => {
   const now = 1_700_000_000_000;
@@ -17,6 +18,8 @@ test("access code comparison accepts only the configured code", () => {
   assert.equal(verifyAccessCode("stage-door"), true);
   assert.equal(verifyAccessCode("wrong"), false);
   assert.equal(verifyAccessCode(null), false);
+  assert.equal(verifyBuyingRoomAccessCode("buyer-door"), true);
+  assert.equal(verifyBuyingRoomAccessCode("stage-door"), false);
 });
 
 test("origin validation uses the received host", () => {
