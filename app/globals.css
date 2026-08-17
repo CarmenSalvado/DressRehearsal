@@ -334,11 +334,27 @@ input:focus-visible,
 }
 
 .editorial-rack figure {
+  position: relative;
   min-width: 0;
   display: grid;
   grid-template-rows: 1fr auto;
+  overflow: hidden;
   margin: 0;
   border-right: 1px solid var(--line);
+  background: var(--canvas);
+  transition: opacity 180ms ease, transform 220ms var(--ease-out);
+}
+
+.editorial-rack figure::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  pointer-events: none;
+  background: var(--coral);
+  opacity: 0;
+  transform: scaleY(0.72);
+  transition: opacity 180ms ease, transform 220ms var(--ease-out);
 }
 
 .editorial-rack img {
@@ -348,6 +364,7 @@ input:focus-visible,
   display: block;
   object-fit: cover;
   object-position: center 34%;
+  transition: transform 220ms var(--ease-out);
 }
 
 .editorial-rack figcaption {
@@ -356,6 +373,7 @@ input:focus-visible,
   align-content: start;
   gap: 0.45rem;
   padding: 0.9rem 0.8rem;
+  transition: transform 220ms var(--ease-out);
 }
 
 .editorial-rack figcaption > span { color: var(--coral); font-family: var(--font-wordmark), Georgia, serif; font-size: 1.2rem; }
@@ -1618,6 +1636,11 @@ input:focus-visible,
 .enter-5 { animation-delay: 220ms; }
 
 @media (hover: hover) and (pointer: fine) {
+  .editorial-rack:has(figure:hover) figure:not(:hover) { opacity: 0.42; }
+  .editorial-rack figure:hover { z-index: 1; transform: scale(1.015); }
+  .editorial-rack figure:hover::after { opacity: 1; transform: scaleY(1); }
+  .editorial-rack figure:hover img { transform: scale(1.045); }
+  .editorial-rack figure:hover figcaption { transform: translateY(-0.15rem); }
   .primary-action:hover,
   .cast-action:hover { background: #344b40; transform: translateY(-2px); }
   .landing-nav a:hover,
@@ -1758,6 +1781,14 @@ input:focus-visible,
   .quiz-palette-card,
   .quiz-image-card,
   .look-card { transition-duration: 1ms; }
+  .editorial-rack figure,
+  .editorial-rack img,
+  .editorial-rack figcaption,
+  .editorial-rack figure::after { transition: opacity 180ms ease; }
+  .editorial-rack figure:hover,
+  .editorial-rack figure:hover img,
+  .editorial-rack figure:hover figcaption,
+  .editorial-rack figure::after { transform: none; }
 }
 
 @keyframes enter {
